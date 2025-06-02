@@ -13,6 +13,8 @@ class CreateAccountsTable extends Migration {
             $table->string('email')->unique();
             $table->string('username')->unique();
             $table->string('password');
+            $table->string('picture')->default('guest.webp');
+            $table->enum('accepted', ['yes', 'no'])->default('no');
             $table->timestamps();
         });
     }

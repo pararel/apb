@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Account;
 use App\Models\History;
 
 class AccountController extends Controller
@@ -14,98 +14,232 @@ class AccountController extends Controller
     {
         return view('main.signup');
     }
-
     public function signup(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:accounts',
-            'username' => 'required|string|max:255|unique:accounts',
+            'email' => 'required|string|email|max:255',
+            'username' => 'required|string|max:255',
             'password' => 'required|string|min:8',
         ]);
 
-        $account = new Account();
-        $account->name = $request->name;
-        $account->email = $request->email;
-        $account->username = $request->username;
-        $account->password = Hash::make($request->password);
-        $account->save();
+        $accessToken = $this->getAccessToken();
+        $projectId = 'emonic-e9f58';
+        $collection = 'admin';
 
-        return redirect()->route('login')->with('success', 'Registration successful! Please log in.');
+        // 🔍 Cek apakah email sudah ada
+        $emailCheck = [
+            'structuredQuery' => [
+                'from' => [['collectionId' => $collection]],
+                'where' => [
+                    'fieldFilter' => [
+                        'field' => ['fieldPath' => 'email'],
+                        'op' => 'EQUAL',
+                        'value' => ['stringValue' => $request->email],
+                    ]
+                ]
+            ]
+        ];
+
+        $emailResponse = Http::withToken($accessToken)->post("https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents:runQuery", $emailCheck);
+        if (!empty($emailResponse->json()[0]['document'])) {
+            return back()->withErrors(['email' => 'Email already exists.']);
+        }
+
+        // 🔍 Cek apakah username sudah ada
+        $usernameCheck = [
+            'structuredQuery' => [
+                'from' => [['collectionId' => $collection]],
+                'where' => [
+                    'fieldFilter' => [
+                        'field' => ['fieldPath' => 'username'],
+                        'op' => 'EQUAL',
+                        'value' => ['stringValue' => $request->username],
+                    ]
+                ]
+            ]
+        ];
+
+        $usernameResponse = Http::withToken($accessToken)->post("https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents:runQuery", $usernameCheck);
+        if (!empty($usernameResponse->json()[0]['document'])) {
+            return back()->withErrors(['username' => 'Username already exists.']);
+        }
+
+        // 📤 Data yang akan disimpan
+        $newAccount = [
+            'fields' => [
+                'name' => ['stringValue' => $request->name],
+                'email' => ['stringValue' => $request->email],
+                'username' => ['stringValue' => $request->username],
+                'password' => ['stringValue' => Hash::make($request->password)],
+                'status' => ['stringValue' => 'no'],
+            ],
+        ];
+
+        $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
+
+        $response = Http::withToken($accessToken)->post($url, $newAccount);
+
+        if ($response->successful()) {
+            return redirect()->route('login')->with('success', 'Registration completed. Kindly wait until your account is approved.');
+        } else {
+            return back()->withErrors(['error' => 'Failed to register account.']);
+        }
     }
-
     public function showLoginForm()
     {
         return view('main.login');
     }
-
     public function login(Request $request)
     {
-        $credentials = $request->only('username', 'password');
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            if ($user->is_admin === 'no') {
-                return redirect()->route('dashboard');
-            } else {
-                return redirect()->route('adminDashboard');
+        $accessToken = $this->getAccessToken();
+        $projectId = 'emonic-e9f58';
+        $collection = 'admin';
+
+        // 🔍 Query untuk cari akun berdasarkan username
+        $query = [
+            'structuredQuery' => [
+                'from' => [['collectionId' => $collection]],
+                'where' => [
+                    'fieldFilter' => [
+                        'field' => ['fieldPath' => 'username'],
+                        'op' => 'EQUAL',
+                        'value' => ['stringValue' => $request->username],
+                    ]
+                ]
+            ]
+        ];
+
+        $response = Http::withToken($accessToken)->post("https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents:runQuery", $query);
+        $documents = $response->json();
+
+        // 🔎 Cek apakah user ditemukan
+        if (empty($documents[0]['document'])) {
+            return back()->withErrors(['username' => 'Account not found.']);
+        }
+
+        $userData = $documents[0]['document']['fields'];
+
+        // 🔐 Verifikasi password
+        if (!Hash::check($request->password, $userData['password']['stringValue'])) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
+        // ✅ Cek status akun
+        if ($userData['status']['stringValue'] !== 'yes') {
+            return back()->withErrors(['username' => 'Your account is not approved yet.']);
+        }
+        $uid = $documents[0]['document']['name'];
+        $uid = basename($uid);
+        // 🔓 Simpan data login ke session Laravel (tanpa model User)
+        session([
+            'firebase_user' => [
+                'uid' => $uid,
+                'name' => $userData['name']['stringValue'],
+                'email' => $userData['email']['stringValue'],
+                'username' => $userData['username']['stringValue'],
+            ]
+        ]);
+
+        return redirect()->route('adminDashboard');
+    }
+    public function logout()
+    {
+        session()->forget('firebase_user');
+        return redirect()->route('login');
+    }
+    public function showUsers()
+    {
+        $projectId = 'emonic-e9f58';
+        $collection = 'user';
+        $accessToken = $this->getAccessToken(); // Panggil fungsi untuk ambil access token
+
+        $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
+
+        $response = Http::withToken($accessToken)->get($url);
+
+        $users = [];
+
+        if ($response->successful()) {
+            $documents = $response->json()['documents'] ?? [];
+
+            foreach ($documents as $doc) {
+                $fields = $doc['fields'];
+
+                $users[] = [
+                    'email' => $fields['email']['stringValue'] ?? '',
+                    'name' => $fields['name']['stringValue'] ?? '',
+                ];
             }
         }
 
-        return back()->withErrors([
-            'username' => 'The provided credentials do not match our records.',
-        ]);
+        return view('admin.dashboard', ['users' => $users]);
     }
-
-    public function logout()
-    {
-        Auth::logout();
-        return redirect()->route('login');
-    }
-
-    public function showSettingsForm()
-    {
-        return view('user.settings');
-    }
-
     public function showAdminSettingsForm()
     {
         return view('admin.settings');
     }
-
     public function updateProfile(Request $request)
     {
+        // Validasi hanya memeriksa format jika diisi
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:accounts,email,' . Auth::id(),
-            'username' => 'required|string|max:255|unique:accounts,username,' . Auth::id(),
-            'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|string|email|max:255',
+            'username' => 'nullable|string|max:255',
         ]);
 
-        $user = Auth::user();
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->username = $request->username;
+        $firebaseUser = session('firebase_user');
+        $uid = $firebaseUser['uid'] ?? null;
 
-        if ($request->hasFile('picture')) {
-            $imageName = date('Y-m-d-H-i-s') . '.' . $request->picture->extension();
-            $request->picture->move(public_path('images/profiles'), $imageName);
-            $user->picture = $imageName;
+        if (!$uid) {
+            return redirect()->route('adminSettings')->withErrors(['auth' => 'Unauthorized access.']);
         }
 
-        $user->save();
-        History::create([
-            'message' => 'Anda memperbarui profil akun anda',
-            'info' => 'account',
-            'id_acc' => Auth::id(),
-        ]);
-        if ($user->is_admin === 'yes') {
+        $accessToken = $this->getAccessToken();
+        $projectId = 'emonic-e9f58'; // Ganti dengan project ID kamu
+        $collection = 'admin';
+        $documentPath = "projects/{$projectId}/databases/(default)/documents/{$collection}/{$uid}";
+
+        // Ambil data lama terlebih dahulu dari Firestore
+        $docResponse = Http::withToken($accessToken)->get("https://firestore.googleapis.com/v1/{$documentPath}");
+
+        if (!$docResponse->successful()) {
+            return redirect()->route('adminSettings')->withErrors(['error' => 'Failed to fetch current data.']);
+        }
+
+        $currentData = $docResponse->json()['fields'];
+
+        // Ambil data baru atau fallback ke data lama
+        $newName = $request->name ?? $currentData['name']['stringValue'] ?? '';
+        $newEmail = $request->email ?? $currentData['email']['stringValue'] ?? '';
+        $newUsername = $request->username ?? $currentData['username']['stringValue'] ?? '';
+
+        // Siapkan data untuk update
+        $updateData = [
+            'fields' => [
+                'name' => ['stringValue' => $newName],
+                'email' => ['stringValue' => $newEmail],
+                'username' => ['stringValue' => $newUsername],
+            ]
+        ];
+
+        $updateFields = 'name,email,username';
+        $response = Http::withToken($accessToken)->patch(
+            "https://firestore.googleapis.com/v1/{$documentPath}?updateMask.fieldPaths=name&updateMask.fieldPaths=email&updateMask.fieldPaths=username",
+            $updateData
+        );
+
+        if ($response->successful()) {
             return redirect()->route('adminSettings')->with('success', 'Profile updated successfully.');
         } else {
-            return redirect()->route('settings')->with('success', 'Profile updated successfully.');
+            return redirect()->route('adminSettings')->withErrors(['error' => 'Failed to update profile.']);
         }
     }
-
     public function updatePassword(Request $request)
     {
         $request->validate([
@@ -123,10 +257,31 @@ class AccountController extends Controller
             'info' => 'account',
             'id_acc' => Auth::id(),
         ]);
-        if ($user->is_admin === 'yes') {
-            return redirect()->route('adminSettings')->with('success', 'Password updated successfully.');
-        } else {
-            return redirect()->route('settings')->with('success', 'Password updated successfully.');
-        }
+        return redirect()->route('adminSettings')->with('success', 'Password updated successfully.');
+    }
+    private function getAccessToken()
+    {
+        $keyFile = storage_path('firebase/firebase_credentials.json');
+        $jsonKey = json_decode(file_get_contents($keyFile), true);
+
+        $jwt = new \Firebase\JWT\JWT;
+
+        $now = time();
+        $token = [
+            "iss" => $jsonKey['client_email'],
+            "scope" => "https://www.googleapis.com/auth/datastore",
+            "aud" => "https://oauth2.googleapis.com/token",
+            "iat" => $now,
+            "exp" => $now + 3600,
+        ];
+
+        $jwtClient = \Firebase\JWT\JWT::encode($token, $jsonKey['private_key'], 'RS256');
+
+        $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $jwtClient,
+        ]);
+
+        return $response->json()['access_token'];
     }
 }

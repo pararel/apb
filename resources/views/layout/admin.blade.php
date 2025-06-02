@@ -23,9 +23,6 @@ Admin
 <a class="btn-target btn btn-transparent @yield('btnBerita') text-secondary" href="{{route('adminNews')}}">
   Berita
 </a>
-<a class="btn-komunitas btn btn-transparent @yield('btnKomunitas') text-secondary" href="{{route('adminCommunity')}}">
-  Komunitas
-</a>
 @endsection
 
 @section('content')

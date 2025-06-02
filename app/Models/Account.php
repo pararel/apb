@@ -15,11 +15,6 @@ class Account extends Authenticatable
         'email',
         'username',
         'password',
-        'all_targets',
-        'current_targets',
-        'likes',
-        'posts',
-        'post_liked',
         'picture',
     ];
 
@@ -28,42 +23,4 @@ class Account extends Authenticatable
         'remember_token',
     ];
     protected $table = 'accounts';
-
-    public function incrementPosts()
-    {
-        $this->increment('posts');
-    }
-    public function decrementPosts()
-    {
-        $this->decrement('posts');
-    }
-    public function incrementCurrentTargets()
-    {
-        $this->increment('current_targets');
-    }
-    public function decrementCurrentTargets()
-    {
-        $this->decrement('current_targets');
-    }
-    public function incrementAllTargets()
-    {
-        $this->increment('all_targets');
-    }
-    public function decrementLikes()
-    {
-        $this->decrement('likes');
-    }
-    public function incrementLikes()
-    {
-        $this->increment('likes');
-    }
-
-    public function incrementPostLiked($amount = 1)
-    {
-        $this->increment('post_liked', $amount);
-    }
-    public function decrementPostLiked($amount = 1)
-    {
-        $this->decrement('post_liked', $amount);
-    }
 }

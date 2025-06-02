@@ -8,11 +8,11 @@
         <table>
           <tr>
             <td><label for="name">Nama:</label></td>
-            <td><input type="text" id="name" name="name" value="{{ old('name', Auth::user()->name) }}" required></td>
+            <td><input type="text" id="name" name="name"></td>
           </tr>
           <tr>
             <td><label for="email">Email:</label></td>
-            <td><input type="email" id="email" name="email" value="{{ old('email', Auth::user()->email) }}" required>
+            <td><input type="email" id="email" name="email">
             </td>
           </tr>
           <tr>
@@ -20,21 +20,16 @@
               <label for="username">Username:</label>
             </td>
             <td>
-              <input type="text" id="username" name="username" value="{{ old('username', Auth::user()->username) }}"
-                required>
+              <input type="text" id="username" name="username">
             </td>
-          </tr>
-          <tr>
-            <td><label for="picture">Foto Profil:</label></td>
-            <td><input type="file" id="picture" name="picture"></td>
           </tr>
         </table>
         <button type="submit" class="btn btn-warning mt-2">Perbarui Profil</button>
       </form>
     </div>
   </div> <br>
-  <a class="toggle-button mt-3 fs-5" data-toggle="collapse" href="#description2" role="button"
-    aria-expanded="false" aria-controls="description2"> <i class="fas fa-chevron-right" id="icon2"></i> Kelola password
+  <a class="toggle-button mt-3 fs-5" data-toggle="collapse" href="#description2" role="button" aria-expanded="false"
+    aria-controls="description2"> <i class="fas fa-chevron-right" id="icon2"></i> Kelola password
   </a>
   <div class="collapse mt-3" id="description2">
     <div class="">

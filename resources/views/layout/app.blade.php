@@ -2,7 +2,7 @@
 <html lang="id">
 
 <head>
-  <title>User | Dashboard</title>
+  <title>Emonic | Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
   <script src="https://kit.fontawesome.com/177edb1edd.js" crossorigin="anonymous"></script>
@@ -72,56 +72,22 @@
         <table class="w-100">
           <tr>
             <td class="d-flex justify-content-center">
-              <img src="{{asset('images/profiles/' . Auth::user()->picture)}}" class=""
+              <img src="{{asset('images/profiles/guest.webp')}}" class=""
                 style="border-radius: 100%; object-fit: cover; height: 150px; width: 150px;" />
             </td>
           </tr>
           <tr>
             <td class="d-flex flex-column justify-content-center text-center">
               <div>
-                <span class="fs-5">{{ Auth::user()->name}}</span><br>
-                <span class="text-secondary">{{'@' . Auth::user()->username}}</span>
+                <span class="fs-5">Admin</span><br>
               </div>
             </td>
           </tr>
         </table>
-        <table class="mt-2 w-100 text-center">
-          @if (Auth::user()->is_admin == "no")
-        <tr>
-        <td>Target Terbuat</td>
-        </tr>
-        <tr>
-        <td class="fs-4">{{ Auth::user()->all_targets}}</td>
-        </tr>
-        <tr>
-        <td>Target Saat Ini</td>
-        </tr>
-        <tr>
-        <td class="fs-4">{{ Auth::user()->current_targets}}</td>
-        </tr>
-      @endif
-          <tr>
-            <td>Unggahan Favorit</td>
-          </tr>
-          <tr>
-            <td class="fs-4">{{ Auth::user()->likes}}</td>
-          </tr>
-          <tr>
-            <td>Unggahan</td>
-          </tr>
-          <tr>
-            <td class="fs-4">{{ Auth::user()->posts}}</td>
-          </tr>
-          <tr>
-            <td>Unggahan Difavorit</td>
-          </tr>
-          <tr>
-            <td class="fs-4">{{ Auth::user()->post_liked}}</td>
-          </tr>
-        </table>
+        
       </div>
       <div>
-        <form action="{{route('logout')}}" method="post">
+        <form action="{{ route('logout') }}" method="POST">
           @csrf
           <button class="logout btn btn-danger w-100 shadow">Logout</button>
         </form>
