@@ -18,17 +18,25 @@
         </tr>
         </thead>
         <tbody>
-          @foreach ($users as $user)
-            <tr>
-              <td>
-                {{ $user['name'] }}
-              </td>
-              <td>
-                {{ $user['email'] }}
-              </td>
-              <td></td>
-            </tr>
-          @endforeach
+        @foreach ($users as $user)
+      <tr>
+        <td>
+        {{ $user['name'] }}
+        </td>
+        <td>
+        {{ $user['email'] }}
+        </td>
+        <td>
+        <form action="{{ route('deleteUser', $user['uid']) }}" method="POST"
+        onsubmit="return confirm('Are you sure you want to delete this user?');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        </td>
+
+      </tr>
+      @endforeach
         </tbody>
       </table>
       </div>

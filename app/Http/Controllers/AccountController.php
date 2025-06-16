@@ -154,32 +154,53 @@ class AccountController extends Controller
         return redirect()->route('login');
     }
     public function showUsers()
-    {
-        $projectId = 'emonic-e9f58';
-        $collection = 'user';
-        $accessToken = $this->getAccessToken(); // Panggil fungsi untuk ambil access token
+{
+    $projectId = 'emonic-e9f58';
+    $collection = 'user';
+    $accessToken = $this->getAccessToken();
 
-        $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
+    $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
 
-        $response = Http::withToken($accessToken)->get($url);
+    $response = Http::withToken($accessToken)->get($url);
 
-        $users = [];
+    $users = [];
 
-        if ($response->successful()) {
-            $documents = $response->json()['documents'] ?? [];
+    if ($response->successful()) {
+        $documents = $response->json()['documents'] ?? [];
 
-            foreach ($documents as $doc) {
-                $fields = $doc['fields'];
+        foreach ($documents as $doc) {
+            $fields = $doc['fields'];
+            $documentName = $doc['name']; // Contoh: projects/emonic-e9f58/databases/(default)/documents/user/abc123uid
+            $uid = basename($documentName); // Mengambil 'abc123uid'
 
-                $users[] = [
-                    'email' => $fields['email']['stringValue'] ?? '',
-                    'name' => $fields['name']['stringValue'] ?? '',
-                ];
-            }
+            $users[] = [
+                'uid' => $uid,
+                'email' => $fields['email']['stringValue'] ?? '',
+                'name' => $fields['name']['stringValue'] ?? '',
+            ];
         }
-
-        return view('admin.dashboard', ['users' => $users]);
     }
+
+    return view('admin.dashboard', ['users' => $users]);
+}
+
+    public function deleteUser($uid)
+{
+    $accessToken = $this->getAccessToken();
+    $projectId = 'emonic-e9f58';
+    $collection = 'user';
+
+    $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}/{$uid}";
+
+    $response = Http::withToken($accessToken)->delete($url);
+
+    if ($response->successful()) {
+        return redirect()->route('adminDashboard')->with('success', 'User deleted successfully.');
+    } else {
+        return back()->withErrors(['delete' => 'Failed to delete user.']);
+    }
+}
+
     public function showAdminSettingsForm()
     {
         return view('admin.settings');

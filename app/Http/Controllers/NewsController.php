@@ -15,14 +15,11 @@ class NewsController extends Controller
     }
 
     public function storeNews(Request $request)
-    {
-        $request->validate([
+{
+    $request->validate([
         'category' => 'required|string',
         'content' => 'required|string',
         'imageUrl' => 'required|string',
-        'sourceUrl' => 'required|string',
-        'subtitle' => 'required|string',
-        'subtitleContent' => 'required|string',
         'title' => 'required|string',
     ]);
 
@@ -40,12 +37,11 @@ class NewsController extends Controller
             'category' => ['stringValue' => $request->category],
             'content' => ['stringValue' => $request->content],
             'imageUrl' => ['stringValue' => $request->imageUrl],
-            'sourceUrl' => ['stringValue' => $request->sourceUrl],
-            'subtitle' => ['stringValue' => $request->subtitle],
-            'subtitleContent' => ['stringValue' => $request->subtitleContent],
             'title' => ['stringValue' => $request->title],
             'createdAt' => ['stringValue' => $uploadTime],
-            'type' => ['stringValue' => 'standard'],
+            'averageRating' => ['integerValue' => 0],
+            'likes' => ['integerValue' => 0],
+            'totalRatings' => ['integerValue' => 0],
         ]
     ];
 
@@ -56,7 +52,8 @@ class NewsController extends Controller
     } else {
         return redirect()->back()->withErrors(['error' => 'Failed to post news.']);
     }
-    }
+}
+
 
 
     public function destroy($id)
