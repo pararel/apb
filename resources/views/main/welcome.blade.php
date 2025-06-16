@@ -171,7 +171,7 @@
         <nav class="navbar navbar-expand-sm bg-dark fixed-top" data-bs-theme="dark">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold animate-fade-in-up" href="#">
-                    <img src="{{ asset('images/emonic_light.png') }}" style="height: 0.7cm;"/>
+                    <img src="{{ asset('images/emonic_light.png') }}" style="height: 0.9cm;"/>
                     EMONIC
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -274,7 +274,10 @@
     <footer class="mt-5 container-fluid bg-dark">
         <div class="row d-flex justify-content-between mx-5 text-white py-5">
             <div class="col-sm-3 animate-fade-in-up" style="animation-delay: 1.6s">
-                <h5 class="fw-bold">Energy Monitoring</h5>
+                <h5 class="fw-bold mb-4">EMONIC</h5>
+                <p>
+                    EMONIC merupakan gabungan dari konsep "Energy Monitoring" dan konsep "Intelligence" serta "Customization".
+                </p>
             </div>
             <div class="col-sm-3 animate-fade-in-up" style="animation-delay: 1.7s">
                 <h5 class="fw-bold mb-4">Alamat</h5>
@@ -289,9 +292,6 @@
                 <div class="social-icons">
                     <a href="https://instagram.com">
                         <i class="fab fa-instagram fs-2"></i>
-                    </a>
-                    <a href="https://facebook.com">
-                        <i class="fab fa-facebook-f fs-2"></i>
                     </a>
                     <a href="https://tiktok.com">
                         <i class="fab fa-tiktok fs-2"></i>

@@ -17,7 +17,7 @@
     <nav class="navbar navbar-expand-sm bg-dark shadow" data-bs-theme="dark">
       <div class="container-fluid">
         <a class="navbar-brand fw-bold animate-fade-in-up" href="#">
-          <img src="{{ asset('images/emonic_light.png') }}" style="height: 0.7cm;" />
+          <img src="{{ asset('images/emonic_light.png') }}" style="height: 0.9cm;" />
           EMONIC
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
