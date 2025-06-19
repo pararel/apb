@@ -18,7 +18,7 @@ Admin
 
 @section('buttons')
 <a class="btn-riwayat btn btn-transparent @yield('btnMasukan') text-secondary" href="{{route('adminDashboard')}}">
-  Masukan
+  Pengguna
 </a>
 <a class="btn-target btn btn-transparent @yield('btnBerita') text-secondary" href="{{route('adminNews')}}">
   Berita

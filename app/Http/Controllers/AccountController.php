@@ -92,6 +92,7 @@ class AccountController extends Controller
     }
     public function login(Request $request)
     {
+        session()->forget('firebase_user');
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
@@ -134,8 +135,8 @@ class AccountController extends Controller
         if ($userData['status']['stringValue'] !== 'yes') {
             return back()->withErrors(['username' => 'Your account is not approved yet.']);
         }
-        $uid = $documents[0]['document']['name'];
-        $uid = basename($uid);
+        $docName = $documents[0]['document']['name'];
+        $uid = basename($docName);
         // 🔓 Simpan data login ke session Laravel (tanpa model User)
         session([
             'firebase_user' => [
@@ -154,52 +155,52 @@ class AccountController extends Controller
         return redirect()->route('login');
     }
     public function showUsers()
-{
-    $projectId = 'emonic-e9f58';
-    $collection = 'user';
-    $accessToken = $this->getAccessToken();
+    {
+        $projectId = 'emonic-e9f58';
+        $collection = 'user';
+        $accessToken = $this->getAccessToken();
 
-    $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
+        $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}";
 
-    $response = Http::withToken($accessToken)->get($url);
+        $response = Http::withToken($accessToken)->get($url);
 
-    $users = [];
+        $users = [];
 
-    if ($response->successful()) {
-        $documents = $response->json()['documents'] ?? [];
+        if ($response->successful()) {
+            $documents = $response->json()['documents'] ?? [];
 
-        foreach ($documents as $doc) {
-            $fields = $doc['fields'];
-            $documentName = $doc['name']; // Contoh: projects/emonic-e9f58/databases/(default)/documents/user/abc123uid
-            $uid = basename($documentName); // Mengambil 'abc123uid'
+            foreach ($documents as $doc) {
+                $fields = $doc['fields'];
+                $documentName = $doc['name']; // Contoh: projects/emonic-e9f58/databases/(default)/documents/user/abc123uid
+                $uid = basename($documentName); // Mengambil 'abc123uid'
 
-            $users[] = [
-                'uid' => $uid,
-                'email' => $fields['email']['stringValue'] ?? '',
-                'name' => $fields['name']['stringValue'] ?? '',
-            ];
+                $users[] = [
+                    'uid' => $uid,
+                    'email' => $fields['email']['stringValue'] ?? '',
+                    'name' => $fields['name']['stringValue'] ?? '',
+                ];
+            }
         }
-    }
 
-    return view('admin.dashboard', ['users' => $users]);
-}
+        return view('admin.dashboard', ['users' => $users]);
+    }
 
     public function deleteUser($uid)
-{
-    $accessToken = $this->getAccessToken();
-    $projectId = 'emonic-e9f58';
-    $collection = 'user';
+    {
+        $accessToken = $this->getAccessToken();
+        $projectId = 'emonic-e9f58';
+        $collection = 'user';
 
-    $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}/{$uid}";
+        $url = "https://firestore.googleapis.com/v1/projects/{$projectId}/databases/(default)/documents/{$collection}/{$uid}";
 
-    $response = Http::withToken($accessToken)->delete($url);
+        $response = Http::withToken($accessToken)->delete($url);
 
-    if ($response->successful()) {
-        return redirect()->route('adminDashboard')->with('success', 'User deleted successfully.');
-    } else {
-        return back()->withErrors(['delete' => 'Failed to delete user.']);
+        if ($response->successful()) {
+            return redirect()->route('adminDashboard')->with('success', 'User deleted successfully.');
+        } else {
+            return back()->withErrors(['delete' => 'Failed to delete user.']);
+        }
     }
-}
 
     public function showAdminSettingsForm()
     {
